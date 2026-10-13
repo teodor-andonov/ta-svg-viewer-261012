@@ -8,8 +8,8 @@
   <meta name="color-scheme" content="light dark">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("svg-viewer-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch{document.documentElement.dataset.theme="light"}</script>
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg?v=4">
+  <link rel="apple-touch-icon" href="./icons/icon-192-v4.png">
   <link rel="stylesheet" href="./styles.css">
   <title>SVG Viewer</title>
 </head>
@@ -20,49 +20,28 @@
         <img id="preview" alt="Selected SVG artwork" draggable="false">
       </div>
 
-      <div id="emptyState" class="empty-state">
-        <div class="empty-mark" aria-hidden="true">
-          <svg viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="10" width="54" height="52" rx="5"/>
-            <path d="M9 22h54M21 10v12"/>
-            <path d="m19 50 12-16 10 11 8-8 6 13H19Z"/>
-            <circle cx="48" cy="31" r="3"/>
-          </svg>
-        </div>
-        <p class="eyebrow">YOUR CANVAS</p>
-        <h1>View an SVG.</h1>
-        <p class="empty-description">Open an SVG from the toolbar below.<br>Everything stays on your device.</p>
-        <button id="sampleButton" class="text-button" type="button">Or explore the sample <span aria-hidden="true">↗</span></button>
-      </div>
     </main>
 
     
 
-    <nav id="toolbar" class="toolbar" aria-label="Viewer controls">
-      <div id="fileInfo" class="file-info" hidden>
-        <button id="fileNameButton" class="file-name-button" type="button" title="Reopen current SVG">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h5"/></svg>
-          <span id="fileName" class="file-name"></span>
-        </button>
-        <button id="fileLocationButton" class="file-location-button" type="button" title="Choose another SVG, starting in this folder when supported">
-          <span id="fileLocation" class="file-location"></span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
-        </button>
-      </div>
-      <div class="control-row">
-      <button id="openFile" class="tool-button open-button" type="button" title="Open SVG file" aria-label="Open SVG file">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/><path d="M12 11v6m-3-3h6"/></svg><span class="open-text">Open</span>
+    <nav id="toolbar" class="toolbar" aria-label="SVG viewer controls">
+      <button id="fileNameButton" class="file-name-button" type="button" aria-label="Open SVG file" title="Open SVG file">
+        <span id="fileName" class="file-name">SVG Viewer</span>
+        <span id="fileLocation" class="file-location" hidden></span>
       </button>
       <span class="tool-divider" aria-hidden="true"></span>
-      <button id="zoomOut" class="tool-button" type="button" aria-label="Zoom out" title="Zoom out" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
-      <button id="zoomLabel" class="zoom-label" type="button" aria-label="Fit SVG to screen" title="Tap to fit" disabled>—</button>
-      <button id="zoomIn" class="tool-button" type="button" aria-label="Zoom in" title="Zoom in" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+      <button id="zoomOut" class="tool-button" type="button" aria-label="Zoom out" title="Zoom out">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+      </button>
+      <button id="zoomLabel" class="zoom-label" type="button" aria-label="Fit SVG to screen" title="Tap to fit">100%</button>
+      <button id="zoomIn" class="tool-button" type="button" aria-label="Zoom in" title="Zoom in">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
+      </button>
       <span class="tool-divider" aria-hidden="true"></span>
       <button id="themeButton" class="tool-button theme-button" type="button" aria-label="Switch to dark mode" title="Switch to dark mode" aria-pressed="false">
         <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.4A8.5 8.5 0 0 1 8.6 3.6 8.5 8.5 0 1 0 20.4 15.4Z"/></svg>
         <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
       </button>
-      </div>
     </nav>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

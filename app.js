@@ -2,8 +2,8 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const stage=$('stage'), artwork=$('artwork'), preview=$('preview'), fileInput=$('fileInput');
-  const empty=$('emptyState'), zoomLabel=$('zoomLabel'), themeButton=$('themeButton'), toast=$('toast');
-  const fileInfo=$('fileInfo'),fileName=$('fileName'),fileLocation=$('fileLocation');
+  const zoomLabel=$('zoomLabel'), themeButton=$('themeButton'), toast=$('toast');
+  const fileName=$('fileName'),fileLocation=$('fileLocation'),fileNameButton=$('fileNameButton');
   const s={url:null,loaded:false,width:0,height:0,scale:1,fitScale:1,x:0,y:0,pointers:new Map(),pinch:null,lastTap:null,multitouch:false,handle:null,name:null};
   let toastTimer;
   function notify(message) {
@@ -107,20 +107,14 @@
       fileInput.click();
     }
   }
-  async function refreshCurrent(){
-    if(s.handle){
-      try{await loadFile(await s.handle.getFile(),{handle:s.handle,source:'Local SVG'});}
-      catch(error){notify(error.message||'Could not reopen SVG');}
-    }else openPicker();
-  }
   function updateFileInfo(name,{handle=null,source='Local SVG',relativePath=''}={}){
     s.name=name;s.handle=handle;
     fileName.textContent=name;
-    fileName.title=name;
     const dirname=relativePath&&relativePath.includes('/')?relativePath.slice(0,relativePath.lastIndexOf('/')):'';
     fileLocation.textContent=dirname||source;
-    fileLocation.title=dirname||'Full filesystem path is not available to web apps. Tap to browse nearby files.';
-    fileInfo.hidden=false;
+    fileLocation.hidden=false;
+    fileNameButton.title='Open SVG (current: '+name+'). Full filesystem paths are restricted by the browser.';
+    fileNameButton.setAttribute('aria-label','Open SVG file. Current: '+name);
   }
   async function loadSvg(svgText,name='Untitled.svg',meta={}){
     const doc=new DOMParser().parseFromString(svgText,'image/svg+xml');
@@ -138,10 +132,8 @@
       const old=s.url;s.url=url;s.width=size.width;s.height=size.height;s.loaded=true;
       resetPointers();preview.src=url;preview.width=size.width;preview.height=size.height;
       preview.style.width=size.width+'px';preview.style.height=size.height+'px';
-      $('openFile').title='Open SVG (current: '+name+')';
       updateFileInfo(name,meta);
-      empty.hidden=true;artwork.hidden=false;
-      $('zoomOut').disabled=false;$('zoomIn').disabled=false;zoomLabel.disabled=false;
+      artwork.hidden=false;
       stage.classList.add('has-artwork');fit();if(old)URL.revokeObjectURL(old);
     }catch(error){URL.revokeObjectURL(url);throw error;}
   }
@@ -180,14 +172,7 @@
     finally{history.replaceState(null,'',location.pathname);}
   }
   receiveSharedSvg();
-  async function loadSample(){
-    try{const r=await fetch('./sample.svg');if(!r.ok)throw Error('Sample unavailable');
-    await loadSvg(await r.text(),'Sample.svg',{source:'Bundled sample · sample.svg'});}catch(e){notify(e.message||'Sample unavailable');}
-  }
-  $('openFile').addEventListener('click',openPicker);
-  $('fileNameButton').addEventListener('click',refreshCurrent);
-  $('fileLocationButton').addEventListener('click',openPicker);
-  $('sampleButton').addEventListener('click',loadSample);
+  fileNameButton.addEventListener('click',openPicker);
   $('zoomIn').addEventListener('click',()=>zoomAt(1.3));
   $('zoomOut').addEventListener('click',()=>zoomAt(1/1.3));
   $('zoomLabel').addEventListener('click',fit);

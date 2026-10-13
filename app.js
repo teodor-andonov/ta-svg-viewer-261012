@@ -2,22 +2,24 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const stage=$('stage'), artwork=$('artwork'), preview=$('preview'), fileInput=$('fileInput');
-  const empty=$('emptyState'), details=$('fileDetails'), zoomLabel=$('zoomLabel'), surfaceButton=$('surfaceButton'), toast=$('toast'), toolbar=$('toolbar');
+  const empty=$('emptyState'), zoomLabel=$('zoomLabel'), themeButton=$('themeButton'), toast=$('toast');
   const s={url:null,loaded:false,width:0,height:0,scale:1,fitScale:1,x:0,y:0,pointers:new Map(),pinch:null,lastTap:null,multitouch:false};
-  const surfaces=['paper','dark','checker'];
   let toastTimer;
   function notify(message) {
     toast.textContent=message; toast.classList.add('visible');
     clearTimeout(toastTimer); toastTimer=setTimeout(()=>toast.classList.remove('visible'),2900);
   }
-  function surface(name) {
-    const value=surfaces.includes(name)?name:'paper';
-    stage.dataset.surface=value;
-    surfaceButton.title='Canvas: '+value+'. Tap to change.';
-    surfaceButton.setAttribute('aria-label','Canvas: '+value+'. Change background');
-    try { localStorage.setItem('svg-viewer-surface',value); } catch {}
+  function setTheme(value) {
+    const mode=value==='dark'?'dark':'light';
+    document.documentElement.dataset.theme=mode;
+    themeButton.setAttribute('aria-pressed',String(mode==='dark'));
+    const title=mode==='dark'?'Switch to light mode':'Switch to dark mode';
+    themeButton.title=title;themeButton.setAttribute('aria-label',title);
+    document.querySelector('meta[name="theme-color"]').content=mode==='dark'?'#191c1b':'#f2f2f0';
+    document.querySelector('meta[name="color-scheme"]').content=mode;
+    try{localStorage.setItem('svg-viewer-theme',mode);}catch{}
   }
-  try { surface(localStorage.getItem('svg-viewer-surface')||'paper'); } catch { surface('paper'); }
+  setTheme(document.documentElement.dataset.theme);
   function render() {
     if (!s.loaded) return;
     artwork.style.transform='translate3d('+s.x+'px,'+s.y+'px,0) scale('+s.scale+')';
@@ -28,7 +30,7 @@
   function fit() {
     if (!s.loaded) return;
     const w=stage.clientWidth,h=stage.clientHeight;
-    const mx=Math.min(65,Math.max(20,w*.075)), availableH=Math.max(90,h-185);
+    const mx=Math.min(65,Math.max(20,w*.075)), availableH=Math.max(90,h-140);
     s.fitScale=Math.max(.0001,Math.min((w-mx*2)/s.width,availableH/s.height));
     s.scale=s.fitScale; s.x=(w-s.width*s.scale)/2; s.y=(h-s.height*s.scale)/2;render();
   }
@@ -108,9 +110,9 @@
       const old=s.url;s.url=url;s.width=size.width;s.height=size.height;s.loaded=true;
       resetPointers();preview.src=url;preview.width=size.width;preview.height=size.height;
       preview.style.width=size.width+'px';preview.style.height=size.height+'px';
-      $('fileName').textContent=name;$('fileName').title=name;
-      $('fileMeta').textContent=Math.round(size.width)+' × '+Math.round(size.height);
-      details.hidden=false;empty.hidden=true;artwork.hidden=false;toolbar.hidden=false;
+      $('openFile').title='Open SVG (current: '+name+')';
+      empty.hidden=true;artwork.hidden=false;
+      $('zoomOut').disabled=false;$('zoomIn').disabled=false;zoomLabel.disabled=false;
       stage.classList.add('has-artwork');fit();if(old)URL.revokeObjectURL(old);
     }catch(error){URL.revokeObjectURL(url);throw error;}
   }
@@ -120,18 +122,41 @@
     catch(error){notify(error.message||'Unable to open SVG');}
   }
   fileInput.addEventListener('change',async()=>{const f=fileInput.files?.[0];fileInput.value='';await loadFile(f);});
+  // Desktop Chromium file associations: installed PWAs can receive .svg files.
+  if('launchQueue' in window && typeof LaunchParams!=='undefined' && 'files' in LaunchParams.prototype){
+    window.launchQueue.setConsumer(async launch=>{
+      if(!launch.files?.length)return;
+      try{await loadFile(await launch.files[0].getFile());}
+      catch(error){notify(error.message||'Unable to open file');}
+    });
+  }
+  // Android Share -> SVG Viewer; temporarily handed off on-device via Cache Storage.
+  async function receiveSharedSvg(){
+    if(!new URLSearchParams(location.search).has('shared'))return;
+    try{
+      const inbox=await caches.open('ta-svg-viewer-261012-inbox-v1');
+      const key=new URL('./__shared_svg__',location.href);
+      const response=await inbox.match(key);
+      if(!response)throw Error('No SVG received. Use Open instead.');
+      await inbox.delete(key);
+      let name='Shared.svg';
+      try{name=decodeURIComponent(response.headers.get('X-SVG-Filename')||name);}catch{}
+      await loadSvg(await response.text(),name);
+    }catch(error){notify(error.message||'Unable to open shared SVG');}
+    finally{history.replaceState(null,'',location.pathname);}
+  }
+  receiveSharedSvg();
   async function loadSample(){
     try{const r=await fetch('./sample.svg');if(!r.ok)throw Error('Sample unavailable');
     await loadSvg(await r.text(),'Sample.svg');}catch(e){notify(e.message||'Sample unavailable');}
   }
-  $('openEmpty').addEventListener('click',openPicker);
-  $('openHeader').addEventListener('click',openPicker);
+  $('openFile').addEventListener('click',openPicker);
   $('sampleButton').addEventListener('click',loadSample);
   $('zoomIn').addEventListener('click',()=>zoomAt(1.3));
   $('zoomOut').addEventListener('click',()=>zoomAt(1/1.3));
   $('zoomLabel').addEventListener('click',fit);
   $('fitButton').addEventListener('click',fit);
-  surfaceButton.addEventListener('click',()=>surface(surfaces[(surfaces.indexOf(stage.dataset.surface)+1)%surfaces.length]));
+  themeButton.addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
   window.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();openPicker();return;}
     if(e.altKey||e.ctrlKey||e.metaKey||!s.loaded)return;

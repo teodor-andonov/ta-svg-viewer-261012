@@ -48,3 +48,11 @@ No build process, package manager or framework. All paths are relative, so the a
 - F or 0: fit
 - Mouse wheel: zoom under cursor
 - Drag and drop: open SVG
+
+## Version 2
+
+One floating bottom bar: Open, zoom out, percentage (tap to fit), zoom in, and theme switch. Light/dark mode updates the interface and canvas and remembers your preference; it does not recolour SVG artwork.
+
+On Android, you can always use **Open**. The installed PWA also registers **Share → SVG Viewer** for SVG files, subject to Android/Chrome support (some recent Android versions have a file-sharing regression). Reinstall the PWA if the share entry is not visible after this update. Android does not support assigning a PWA as the OS's default .svg opener.
+
+On Windows/macOS/Linux desktop Chromium, installed PWA SVG file association is supported through `file_handlers` and `launchQueue`. Shared SVGs are transferred via temporary on-device Cache Storage and deleted after opening; never uploaded.

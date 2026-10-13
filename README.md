@@ -56,3 +56,10 @@ One floating bottom bar: Open, zoom out, percentage (tap to fit), zoom in, and t
 On Android, you can always use **Open**. The installed PWA also registers **Share → SVG Viewer** for SVG files, subject to Android/Chrome support (some recent Android versions have a file-sharing regression). Reinstall the PWA if the share entry is not visible after this update. Android does not support assigning a PWA as the OS's default .svg opener.
 
 On Windows/macOS/Linux desktop Chromium, installed PWA SVG file association is supported through `file_handlers` and `launchQueue`. Shared SVGs are transferred via temporary on-device Cache Storage and deleted after opening; never uploaded.
+
+## Version 3 — desktop file handling, updates and file information
+
+- Windows Chrome/Edge: install the PWA, allow its file-handling permission, and choose **SVG Viewer** for `.svg` in **Right-click → Open with** or **Windows Settings → Apps → Default apps → .svg**. If not registered, reinstall the PWA and check browser app permissions.
+- The bottom panel shows the filename and any accessible relative directory; native full paths (such as `C:\\Projects\\foo.svg`) are hidden by web-platform security. Clicking the filename refreshes the original from disk when a browser file handle exists; the location text opens the native SVG picker near the last folder when supported.
+- Light/dark mode controls the entire app shell and canvas (not vector artwork). Fixed stale JavaScript referencing a removed Fit button.
+- A versioned offline cache and service worker update check on launch, hourly while open, and when returning online/foreground. When a new worker activates, idle app windows reload; viewers with open SVGs reload on next return to avoid interrupting the current view.

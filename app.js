@@ -3,7 +3,8 @@
   const $ = id => document.getElementById(id);
   const stage=$('stage'), artwork=$('artwork'), preview=$('preview'), fileInput=$('fileInput');
   const empty=$('emptyState'), zoomLabel=$('zoomLabel'), themeButton=$('themeButton'), toast=$('toast');
-  const s={url:null,loaded:false,width:0,height:0,scale:1,fitScale:1,x:0,y:0,pointers:new Map(),pinch:null,lastTap:null,multitouch:false};
+  const fileInfo=$('fileInfo'),fileName=$('fileName'),fileLocation=$('fileLocation');
+  const s={url:null,loaded:false,width:0,height:0,scale:1,fitScale:1,x:0,y:0,pointers:new Map(),pinch:null,lastTap:null,multitouch:false,handle:null,name:null};
   let toastTimer;
   function notify(message) {
     toast.textContent=message; toast.classList.add('visible');
@@ -93,8 +94,35 @@
     if(!s.loaded)return;e.preventDefault();const p=point(e.clientX,e.clientY);
     zoomAt(Math.exp(-e.deltaY*.0016),p.x,p.y);
   },{passive:false});
-  function openPicker(){fileInput.click();}
-  async function loadSvg(svgText,name='Untitled.svg'){
+  async function openPicker(){
+    if(typeof window.showOpenFilePicker!=='function'){fileInput.click();return;}
+    try{
+      const options={id:'ta-svg-open',types:[{description:'SVG images',accept:{'image/svg+xml':['.svg']}}]};
+      if(s.handle)options.startIn=s.handle;
+      const handles=await window.showOpenFilePicker(options);
+      if(handles?.length)await loadFile(await handles[0].getFile(),{handle:handles[0],source:'Local SVG'});
+    }catch(error){
+      if(error?.name==='AbortError')return;
+      // Browsers that block the advanced file picker still have the classic one.
+      fileInput.click();
+    }
+  }
+  async function refreshCurrent(){
+    if(s.handle){
+      try{await loadFile(await s.handle.getFile(),{handle:s.handle,source:'Local SVG'});}
+      catch(error){notify(error.message||'Could not reopen SVG');}
+    }else openPicker();
+  }
+  function updateFileInfo(name,{handle=null,source='Local SVG',relativePath=''}={}){
+    s.name=name;s.handle=handle;
+    fileName.textContent=name;
+    fileName.title=name;
+    const dirname=relativePath&&relativePath.includes('/')?relativePath.slice(0,relativePath.lastIndexOf('/')):'';
+    fileLocation.textContent=dirname||source;
+    fileLocation.title=dirname||'Full filesystem path is not available to web apps. Tap to browse nearby files.';
+    fileInfo.hidden=false;
+  }
+  async function loadSvg(svgText,name='Untitled.svg',meta={}){
     const doc=new DOMParser().parseFromString(svgText,'image/svg+xml');
     if(doc.querySelector('parsererror')||doc.documentElement.localName!=='svg')throw Error('Not a valid SVG file.');
     // Load as an image rather than executing potentially untrusted markup in the document.
@@ -111,22 +139,28 @@
       resetPointers();preview.src=url;preview.width=size.width;preview.height=size.height;
       preview.style.width=size.width+'px';preview.style.height=size.height+'px';
       $('openFile').title='Open SVG (current: '+name+')';
+      updateFileInfo(name,meta);
       empty.hidden=true;artwork.hidden=false;
       $('zoomOut').disabled=false;$('zoomIn').disabled=false;zoomLabel.disabled=false;
       stage.classList.add('has-artwork');fit();if(old)URL.revokeObjectURL(old);
     }catch(error){URL.revokeObjectURL(url);throw error;}
   }
-  async function loadFile(file){
+  async function loadFile(file,meta={}){
     if(!file)return;
-    try{await loadSvg(await file.text(),file.name||'Untitled.svg');}
-    catch(error){notify(error.message||'Unable to open SVG');}
+    try{
+      await loadSvg(await file.text(),file.name||'Untitled.svg',{
+        ...meta,
+        source:meta.source||'Local file · location restricted',
+        relativePath:file.webkitRelativePath||meta.relativePath||''
+      });
+    }catch(error){notify(error.message||'Unable to open SVG');}
   }
   fileInput.addEventListener('change',async()=>{const f=fileInput.files?.[0];fileInput.value='';await loadFile(f);});
   // Desktop Chromium file associations: installed PWAs can receive .svg files.
-  if('launchQueue' in window && typeof LaunchParams!=='undefined' && 'files' in LaunchParams.prototype){
+  if(window.launchQueue && typeof window.launchQueue.setConsumer==='function'){
     window.launchQueue.setConsumer(async launch=>{
       if(!launch.files?.length)return;
-      try{await loadFile(await launch.files[0].getFile());}
+      try{await loadFile(await launch.files[0].getFile(),{handle:launch.files[0],source:'Associated SVG'});}
       catch(error){notify(error.message||'Unable to open file');}
     });
   }
@@ -141,21 +175,22 @@
       await inbox.delete(key);
       let name='Shared.svg';
       try{name=decodeURIComponent(response.headers.get('X-SVG-Filename')||name);}catch{}
-      await loadSvg(await response.text(),name);
+      await loadSvg(await response.text(),name,{source:'Shared from device'});
     }catch(error){notify(error.message||'Unable to open shared SVG');}
     finally{history.replaceState(null,'',location.pathname);}
   }
   receiveSharedSvg();
   async function loadSample(){
     try{const r=await fetch('./sample.svg');if(!r.ok)throw Error('Sample unavailable');
-    await loadSvg(await r.text(),'Sample.svg');}catch(e){notify(e.message||'Sample unavailable');}
+    await loadSvg(await r.text(),'Sample.svg',{source:'Bundled sample · sample.svg'});}catch(e){notify(e.message||'Sample unavailable');}
   }
   $('openFile').addEventListener('click',openPicker);
+  $('fileNameButton').addEventListener('click',refreshCurrent);
+  $('fileLocationButton').addEventListener('click',openPicker);
   $('sampleButton').addEventListener('click',loadSample);
   $('zoomIn').addEventListener('click',()=>zoomAt(1.3));
   $('zoomOut').addEventListener('click',()=>zoomAt(1/1.3));
   $('zoomLabel').addEventListener('click',fit);
-  $('fitButton').addEventListener('click',fit);
   themeButton.addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
   window.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();openPicker();return;}
@@ -176,7 +211,31 @@
     last={w,h};fit();
     if(!previousFit){s.scale=clamp(s.fitScale*relative);s.x=w/2-imageX*s.scale;s.y=h/2-imageY*s.scale;render();}
   }).observe(stage);
-  if('serviceWorker'in navigator)window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});
-  });
+  if('serviceWorker' in navigator){
+    let pendingReload=false;
+    let priorController=Boolean(navigator.serviceWorker.controller);
+    const safeReload=()=>{
+      if(!priorController)return;
+      if(document.visibilityState==='visible'&&s.loaded){
+        pendingReload=true;
+        notify('Viewer updated. Changes apply when you return to the app.');
+      }else location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange',safeReload);
+    // Apply downloaded updates automatically when the app next resumes.
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='visible'&&pendingReload)location.reload();
+    });
+    window.addEventListener('load',async()=>{
+      try{
+        const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+        // registration refreshes may be throttled by the browser while offline.
+        const check=()=>reg.update().catch(()=>{});
+        check();
+        setInterval(check,60*60*1000);
+        document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});
+        window.addEventListener('online',check);
+      }catch(error){console.warn('Offline updates unavailable',error);}
+    });
+  }
 })();

@@ -1,5 +1,5 @@
 /* Offline app shell and on-device SVG share handoff. */
-const CACHE='ta-svg-viewer-261012-shell-v2';
+const CACHE='ta-svg-viewer-261012-shell-v3';
 const INBOX='ta-svg-viewer-261012-inbox-v1';
 const ASSETS=['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./sample.svg','./icons/icon.svg','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));});
@@ -22,5 +22,10 @@ self.addEventListener('fetch',e=>{
     return;
   }
   if(e.request.method!=='GET'||url.origin!==scope.origin||!url.pathname.startsWith(scope.pathname))return;
-  e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request)));
+  e.respondWith((async()=>{
+    // Query string navigation (e.g. share redirect) also works offline.
+    const lookup=url.pathname===scope.pathname?new URL('./',scope):e.request;
+    const cached=await caches.match(lookup);
+    return cached||fetch(e.request);
+  })());
 });

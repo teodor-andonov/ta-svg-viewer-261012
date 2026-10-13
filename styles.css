@@ -53,3 +53,19 @@ button:disabled{cursor:default;opacity:.32}
 :root[data-theme="dark"] .theme-button .sun-icon{display:block}
 .toast{color:var(--toast-fg);background:var(--toast-bg)}
 @media(max-width:340px){.toolbar{padding:4px;gap:0}.open-button{min-width:43px;padding:0 9px}.open-text{display:none}.tool-button,.zoom-label{min-width:40px;height:42px}.zoom-label{min-width:49px}.tool-divider{margin:0 3px}}
+
+/* v3: one compact bottom panel with optional file provenance and accessible theme */
+html,body,#app{background:var(--canvas);color:var(--foreground)}
+:root[data-theme="dark"] .stage{background-color:#191c1b}
+:root[data-theme="light"] .stage{background-color:#f2f2f0}
+.toolbar{flex-direction:column;gap:0;width:max-content;min-width:288px;max-width:calc(100vw - 24px);padding:5px}
+.control-row{display:flex;align-items:center;justify-content:center;gap:2px;width:100%}
+.file-info{display:flex;width:100%;min-width:0;flex-direction:column;align-items:center;gap:1px;padding:7px 9px 8px;margin-bottom:4px;border-bottom:1px solid var(--separator)}
+.file-name-button,.file-location-button{display:flex;align-items:center;justify-content:center;gap:6px;max-width:100%;padding:1px 5px;background:transparent;border:0;border-radius:5px;min-height:19px}
+.file-name-button{font-size:12px;font-weight:650;letter-spacing:-.01em}
+.file-name-button svg{width:15px;height:15px;flex-shrink:0}
+.file-name,.file-location{display:block;max-width:min(345px,calc(100vw - 110px));text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.file-location-button{font-size:10px;font-weight:480;color:var(--muted)}
+.file-location-button svg{width:12px;height:12px;flex-shrink:0}
+.file-name-button:active,.file-location-button:active{background:var(--pressed)}
+@media(max-width:340px){.toolbar{min-width:0}.file-name,.file-location{max-width:230px}}

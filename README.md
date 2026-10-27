@@ -30,3 +30,7 @@ The PWA automatically checks for deployed updates using a versioned service work
 - `manifest.webmanifest`: PWA setup and file association
 - `icons/`: SVG source and install icons
 - `.github/workflows/pages.yml`: deployment to GitHub Pages
+
+## Publishing
+
+Releases are manual. Open **Actions → Publish SVG Viewer → Run workflow** and select `main`. Pushing commits does not trigger the Pages publishing workflow. In **Settings → Pages**, set **Build and deployment → Source** to **GitHub Actions**, not **Deploy from a branch**.

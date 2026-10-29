@@ -196,31 +196,5 @@
     last={w,h};fit();
     if(!previousFit){s.scale=clamp(s.fitScale*relative);s.x=w/2-imageX*s.scale;s.y=h/2-imageY*s.scale;render();}
   }).observe(stage);
-  if('serviceWorker' in navigator){
-    let pendingReload=false;
-    let priorController=Boolean(navigator.serviceWorker.controller);
-    const safeReload=()=>{
-      if(!priorController)return;
-      if(document.visibilityState==='visible'&&s.loaded){
-        pendingReload=true;
-        notify('Viewer updated. Changes apply when you return to the app.');
-      }else location.reload();
-    };
-    navigator.serviceWorker.addEventListener('controllerchange',safeReload);
-    // Apply downloaded updates automatically when the app next resumes.
-    document.addEventListener('visibilitychange',()=>{
-      if(document.visibilityState==='visible'&&pendingReload)location.reload();
-    });
-    window.addEventListener('load',async()=>{
-      try{
-        const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
-        // registration refreshes may be throttled by the browser while offline.
-        const check=()=>reg.update().catch(()=>{});
-        check();
-        setInterval(check,60*60*1000);
-        document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check();});
-        window.addEventListener('online',check);
-      }catch(error){console.warn('Offline updates unavailable',error);}
-    });
-  }
+  window.taPwaCanUpdate=()=>true; // Viewer has no file writes or unsaved edits.
 })();

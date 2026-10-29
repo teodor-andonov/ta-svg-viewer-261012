@@ -34,3 +34,7 @@ The PWA automatically checks for deployed updates using a versioned service work
 ## Publishing
 
 Releases are manual. Open **Actions → Publish SVG Viewer → Run workflow** and select `main`. Pushing commits does not trigger the Pages publishing workflow. In **Settings → Pages**, set **Build and deployment → Source** to **GitHub Actions**, not **Deploy from a branch**.
+
+## PWA maintenance
+
+See [PWA.md](PWA.md) for this app’s identity, icons, update guard and release checks. Shared browser requirements live in the [TA PWA guide](https://github.com/teodor-andonov/261027_ta-guides/blob/main/guides/pwa/README.md); repository publishing policy is documented [separately](https://github.com/teodor-andonov/261027_ta-guides/blob/main/guides/publishing/README.md).

@@ -1,7 +1,7 @@
 {
   "id": "/ta-svg-viewer-261012/",
-  "name": "SVG Viewer",
-  "short_name": "SVG Viewer",
+  "name": "TaViewsvg",
+  "short_name": "TaViewsvg",
   "description": "A minimal, private SVG viewer made for touch.",
   "start_url": "./",
   "scope": "./",

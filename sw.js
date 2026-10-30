@@ -1,5 +1,5 @@
 /* Offline app shell and on-device SVG share handoff. */
-const CACHE='ta-svg-viewer-261012-shell-v5-ta-names-2-ta-update-v4';;
+const CACHE='ta-svg-viewer-261012-shell-v5-ta-names-2-ta-update-v5';;
 const INBOX='ta-svg-viewer-261012-inbox-v1';
 const ASSETS=['./pwa-update.js','./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./sample.svg','./icons/icon.svg','./icons/icon.svg?v=5','./icons/icon-192-v5.png','./icons/icon-512-v5.png','./icons/icon-maskable-192-v5.png','./icons/icon-maskable-512-v5.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));});
